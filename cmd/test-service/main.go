@@ -1,7 +1,6 @@
 package main
 
 import (
-	`fmt`
 	`net/http/pprof`
 	`os`
 	`time`
@@ -58,9 +57,6 @@ func main() {
 	router := httpserver.NewPreparedServer(svc)
 	router.Handle("GET", "/debug/pprof/", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Index))
 	router.Handle("GET", "/debug/pprof/profile", fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Profile))
-	router.Handle("GET", "/user", func(ctx *fasthttp.RequestCtx) {
-		fmt.Printf("->id:%s",ctx.URI().QueryArgs().Peek("id"))
-	})
 	p := fasthttpprometheus.NewPrometheus(cfg.MetricsSubsystem)
 	fasthttpServer := &fasthttp.Server{
 		Handler:            p.WrapHandler(router),

@@ -177,6 +177,13 @@ func NewPreparedServer(svc service) *fasthttprouter.Router {
 
 	return MakeFastHTTPRouter(
 		[]*HandlerSettings{
+			//{
+			//	Path:   "/user",
+			//	Method: "GET",
+			//	Handler: func(ctx *fasthttp.RequestCtx) {
+			//		fmt.Printf("->id:%s",ctx.URI().QueryArgs().Peek("id"))
+			//	},
+			//},
 			{
 				Path:    URIPathClientGetUser,
 				Method:  http.MethodGet,

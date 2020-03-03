@@ -18,7 +18,6 @@ type service struct {
 }
 
 func (s *service) GetUser(ctx context.Context, request *models.Request) (response models.Response, err error) {
-	fmt.Printf("id=%d", request.Id)
 	if request.Id > 0 {
 		response.Data = &models.DataStruct{Res: true}
 		return
