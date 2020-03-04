@@ -15,9 +15,4 @@ const (
 	URIPathPostOrder = URIPrefix + "/orders/:name"
 	URIPathGetCount  = URIPrefix + "/user/:name"
 	URIPathGetOrder  = URIPrefix + "/orders/:name"
-
-	HTTPMethodGetUser   = "fill me!"
-	HTTPMethodPostOrder = "fill me!"
-	HTTPMethodGetCount  = "fill me!"
-	HTTPMethodGetOrder  = "fill me!"
 )

@@ -92,8 +92,8 @@ func NewPostOrderTransport(errorCreator errorCreator) PostOrderTransport {
 
 // GetCountTransport transport interface
 type GetCountTransport interface {
-	DecodeRequest(ctx context.Context, r *fasthttp.Request) (request models.Request, err error)
-	EncodeResponse(ctx context.Context, r *fasthttp.Response, response *models.Response) (err error)
+	DecodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request) (request models.Request, err error)
+	EncodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response, response *models.Response) (err error)
 }
 
 type getCountTransport struct {
@@ -101,15 +101,25 @@ type getCountTransport struct {
 }
 
 // DecodeRequest method for decoding requests on server side
-func (t *getCountTransport) DecodeRequest(ctx context.Context, r *fasthttp.Request) (request models.Request, err error) {
-	if err = request.UnmarshalJSON(r.Body()); err != nil {
-		return models.Request{}, t.errorCreator(http.StatusBadRequest, "failed to decode JSON request: %v", err)
+func (t *getCountTransport) DecodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request) (request models.Request, err error) {
+	id := ctx.UserValue("id").(string)
+	if id == "" {
+		return request, t.errorCreator(http.StatusBadRequest, "missing user id %v", err)
+	}
+	request.Id, err = strconv.Atoi(id)
+	if err != nil {
+		return request, t.errorCreator(
+			http.StatusBadRequest,
+			"Bad request, check the fields.",
+			"failed to get Id from query: %v",
+			err,
+		)
 	}
 	return
 }
 
 // EncodeResponse method for encoding response on server side
-func (t *getCountTransport) EncodeResponse(ctx context.Context, r *fasthttp.Response, response *models.Response) (err error) {
+func (t *getCountTransport) EncodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response, response *models.Response) (err error) {
 	r.Header.Set("Content-Type", "application/json")
 	if _, err = easyjson.MarshalToWriter(response, r.BodyWriter()); err != nil {
 		return t.errorCreator(http.StatusInternalServerError, "failed to encode JSON response: %s", err)
@@ -136,9 +146,6 @@ type getOrderTransport struct {
 
 // DecodeRequest method for decoding requests on server side
 func (t *getOrderTransport) DecodeRequest(ctx context.Context, r *fasthttp.Request) (request models.Request, err error) {
-	if err = request.UnmarshalJSON(r.Body()); err != nil {
-		return models.Request{}, t.errorCreator(http.StatusBadRequest, "failed to decode JSON request: %v", err)
-	}
 	return
 }
 

@@ -39,11 +39,7 @@ func (t *getUserClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
 	r.Header.Set("Content-Type", "application/json")
-	r.SetBodyStreamWriter(func(w *bufio.Writer) {
-		if err = json.NewEncoder(w).Encode(request); err != nil {
-			return
-		}
-	})
+	r.URI().QueryArgs().Add("id", string(request.Id))
 	return
 }
 
@@ -137,20 +133,16 @@ type getCountClientTransport struct {
 }
 
 // EncodeRequest method for encoding requests on client side
-func (t *getCountClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error) {
+func (t *getCountClientTransport) EncodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request, request *models.Request) (err error) {
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
 	r.Header.Set("Content-Type", "application/json")
-	r.SetBodyStreamWriter(func(w *bufio.Writer) {
-		if err = json.NewEncoder(w).Encode(request); err != nil {
-			return
-		}
-	})
+	ctx.SetUserValue("id", string(request.Id))
 	return
 }
 
 // DecodeResponse method for decoding response on client side
-func (t *getCountClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error) {
+func (t *getCountClientTransport) DecodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response) (response models.Response, err error) {
 	if r.StatusCode() != http.StatusOK {
 		err = t.errorProcessor.Decode(r)
 		return
@@ -192,11 +184,6 @@ func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
 	r.Header.Set("Content-Type", "application/json")
-	r.SetBodyStreamWriter(func(w *bufio.Writer) {
-		if err = json.NewEncoder(w).Encode(request); err != nil {
-			return
-		}
-	})
 	return
 }
 

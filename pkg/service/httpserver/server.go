@@ -104,7 +104,7 @@ type getCountServer struct {
 
 // ServeHTTP implements http.Handler.
 func (s *getCountServer) ServeHTTP(ctx *fasthttp.RequestCtx) {
-	request, err := s.transport.DecodeRequest(ctx, &ctx.Request)
+	request, err := s.transport.DecodeRequest(*ctx, &ctx.Request)
 	if err != nil {
 		s.errorProcessor.Encode(ctx, &ctx.Response, err)
 		return
@@ -116,7 +116,7 @@ func (s *getCountServer) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if err := s.transport.EncodeResponse(ctx, &ctx.Response, &response); err != nil {
+	if err := s.transport.EncodeResponse(*ctx, &ctx.Response, &response); err != nil {
 		s.errorProcessor.Encode(ctx, &ctx.Response, err)
 		return
 	}
