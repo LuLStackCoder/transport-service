@@ -16,7 +16,7 @@ import (
 type service interface {
 	GetUser(ctx context.Context, request *models.Request) (response models.Response, err error)
 	PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error)
-	GetCount(ctx context.Context, request *models.Request) (response models.Response, err error)
+	GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error)
 	GetOrder(ctx context.Context) (response models.Response, err error)
 }
 
@@ -110,7 +110,7 @@ func (s *getCountServer) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	response, err := s.service.GetCount(ctx, &request)
+	response, err := s.service.GetCount(*ctx, &request)
 	if err != nil {
 		s.errorProcessor.Encode(ctx, &ctx.Response, err)
 		return
@@ -169,7 +169,7 @@ func NewGetOrderServer(transport GetOrderTransport, service service, errorProces
 }
 
 func NewPreparedServer(svc service) *fasthttprouter.Router {
-	errorProcessor := NewErrorProcessor(http.StatusInternalServerError, "internal error")
+	errorProcessor := NewErrorProcessor(http.StatusInternalServerError, "Internal error")
 	getUserTransport := NewGetUserTransport(NewError)
 	postOrderServer := NewPostOrderTransport(NewError)
 	getCountTransport := NewGetCountTransport(NewError)
@@ -177,13 +177,6 @@ func NewPreparedServer(svc service) *fasthttprouter.Router {
 
 	return MakeFastHTTPRouter(
 		[]*HandlerSettings{
-			//{
-			//	Path:   "/user",
-			//	Method: "GET",
-			//	Handler: func(ctx *fasthttp.RequestCtx) {
-			//		fmt.Printf("->id:%s",ctx.URI().QueryArgs().Peek("id"))
-			//	},
-			//},
 			{
 				Path:    URIPathClientGetUser,
 				Method:  http.MethodGet,

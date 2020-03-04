@@ -121,8 +121,8 @@ func NewPostOrderClientTransport(
 
 // GetCountClientTransport transport interface
 type GetCountClientTransport interface {
-	EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error)
-	DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error)
+	EncodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request, request *models.Request) (err error)
+	DecodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response) (response models.Response, err error)
 }
 
 type getCountClientTransport struct {
@@ -168,7 +168,7 @@ func NewGetCountClientTransport(
 
 // GetOrderClientTransport transport interface
 type GetOrderClientTransport interface {
-	EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error)
+	EncodeRequest(ctx context.Context, r *fasthttp.Request) (err error)
 	DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error)
 }
 
@@ -180,7 +180,7 @@ type getOrderClientTransport struct {
 }
 
 // EncodeRequest method for encoding requests on client side
-func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error) {
+func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request) (err error) {
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
 	r.Header.Set("Content-Type", "application/json")

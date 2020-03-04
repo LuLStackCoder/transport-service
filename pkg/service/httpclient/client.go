@@ -5,42 +5,44 @@ package httpclient
 
 import (
 	"context"
+	`net/http`
 
 	"github.com/valyala/fasthttp"
 
 	`github.com/LuLStackCoder/test-service/pkg/models`
 )
 
-var (
-	GetUser   = option{}
-	PostOrder = option{}
-	GetCount  = option{}
-	GetOrder  = option{}
+const (
+	method = "http://"
+
+	URIPathClientGetUser    = "/api/v1/user"
+	URIPathClientPostOrder = "/api/v1/orders"
+	URIPathClientGetCount      = "/api/v1/user/:id/count"
+	URIPathClientGetOrder  = "/api/v1/orders"
 )
 
-type option struct{}
+type (
+	beforeRequest func(req *fasthttp.Request) (err error)
+	afterResponse func(resp *fasthttp.Response) (err error)
+)
 
-// Option ...
-type Option interface {
-	Prepare(ctx context.Context, r *fasthttp.Request)
-}
 
 // Service implements Service interface
 type Service interface {
 	GetUser(ctx context.Context, request *models.Request) (response models.Response, err error)
 	PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error)
-	GetCount(ctx context.Context, request *models.Request) (response models.Response, err error)
-	GetOrder(ctx context.Context, request *models.Request) (response models.Response, err error)
+	GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error)
+	GetOrder(ctx context.Context) (response models.Response, err error)
 }
 
 type client struct {
 	cli *fasthttp.HostClient
 
+
 	transportGetUser   GetUserClientTransport
 	transportPostOrder PostOrderClientTransport
 	transportGetCount  GetCountClientTransport
 	transportGetOrder  GetOrderClientTransport
-	options            map[interface{}]Option
 }
 
 // GetUser ...
@@ -50,9 +52,6 @@ func (s *client) GetUser(ctx context.Context, request *models.Request) (response
 		fasthttp.ReleaseRequest(req)
 		fasthttp.ReleaseResponse(res)
 	}()
-	if opt, ok := s.options[GetUser]; ok {
-		opt.Prepare(ctx, req)
-	}
 	if err = s.transportGetUser.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
@@ -66,13 +65,10 @@ func (s *client) GetUser(ctx context.Context, request *models.Request) (response
 // PostOrder ...
 func (s *client) PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error) {
 	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
-	defer func() {
+	defer func() {;
 		fasthttp.ReleaseRequest(req)
 		fasthttp.ReleaseResponse(res)
 	}()
-	if opt, ok := s.options[PostOrder]; ok {
-		opt.Prepare(ctx, req)
-	}
 	if err = s.transportPostOrder.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
@@ -84,15 +80,12 @@ func (s *client) PostOrder(ctx context.Context, request *models.Request) (respon
 }
 
 // GetCount ...
-func (s *client) GetCount(ctx context.Context, request *models.Request) (response models.Response, err error) {
+func (s *client) GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error) {
 	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
 		fasthttp.ReleaseResponse(res)
 	}()
-	if opt, ok := s.options[GetCount]; ok {
-		opt.Prepare(ctx, req)
-	}
 	if err = s.transportGetCount.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
@@ -104,16 +97,13 @@ func (s *client) GetCount(ctx context.Context, request *models.Request) (respons
 }
 
 // GetOrder ...
-func (s *client) GetOrder(ctx context.Context, request *models.Request) (response models.Response, err error) {
+func (s *client) GetOrder(ctx context.Context) (response models.Response, err error) {
 	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
 		fasthttp.ReleaseResponse(res)
 	}()
-	if opt, ok := s.options[GetOrder]; ok {
-		opt.Prepare(ctx, req)
-	}
-	if err = s.transportGetOrder.EncodeRequest(ctx, req, request); err != nil {
+	if err = s.transportGetOrder.EncodeRequest(ctx, req,); err != nil {
 		return
 	}
 	err = s.cli.Do(req, res)
@@ -131,7 +121,6 @@ func NewClient(
 	transportPostOrder PostOrderClientTransport,
 	transportGetCount GetCountClientTransport,
 	transportGetOrder GetOrderClientTransport,
-	options map[interface{}]Option,
 ) Service {
 	return &client{
 		cli: cli,
@@ -140,61 +129,48 @@ func NewClient(
 		transportPostOrder: transportPostOrder,
 		transportGetCount:  transportGetCount,
 		transportGetOrder:  transportGetOrder,
-		options:            options,
 	}
 }
 
 // NewPreparedClient create and set up http client
 func NewPreparedClient(
 	serverURL string,
-	serverHost string,
 	maxConns int,
-	options map[interface{}]Option,
 	errorProcessor errorProcessor,
 	errorCreator errorCreator,
-
-	uriPathGetUser string,
-	uriPathPostOrder string,
-	uriPathGetCount string,
-	uriPathGetOrder string,
-
-	httpMethodGetUser string,
-	httpMethodPostOrder string,
-	httpMethodGetCount string,
-	httpMethodGetOrder string,
 ) Service {
 
 	transportGetUser := NewGetUserClientTransport(
 		errorProcessor,
 		errorCreator,
-		serverURL+uriPathGetUser,
-		httpMethodGetUser,
+		method+serverURL+URIPathClientGetUser,
+		http.MethodGet,
 	)
 
 	transportPostOrder := NewPostOrderClientTransport(
 		errorProcessor,
 		errorCreator,
-		serverURL+uriPathPostOrder,
-		httpMethodPostOrder,
+		method+serverURL+URIPathClientGetUser,
+		http.MethodPost,
 	)
 
 	transportGetCount := NewGetCountClientTransport(
 		errorProcessor,
 		errorCreator,
-		serverURL+uriPathGetCount,
-		httpMethodGetCount,
+		method+serverURL+URIPathClientGetUser,
+		http.MethodGet,
 	)
 
 	transportGetOrder := NewGetOrderClientTransport(
 		errorProcessor,
 		errorCreator,
-		serverURL+uriPathGetOrder,
-		httpMethodGetOrder,
+		method+serverURL+URIPathClientGetUser,
+		http.MethodGet,
 	)
 
 	return NewClient(
 		&fasthttp.HostClient{
-			Addr:     serverHost,
+			Addr:     serverURL,
 			MaxConns: maxConns,
 		},
 
@@ -202,6 +178,5 @@ func NewPreparedClient(
 		transportPostOrder,
 		transportGetCount,
 		transportGetOrder,
-		options,
 	)
 }
