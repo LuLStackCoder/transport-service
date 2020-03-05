@@ -16,7 +16,7 @@ import (
 type service interface {
 	GetUser(ctx context.Context, request *models.Request) (response models.Response, err error)
 	PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error)
-	GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error)
+	GetCount(ctx context.Context, request *models.Request) (response models.Response, err error)
 	GetOrder(ctx context.Context) (response models.Response, err error)
 }
 
@@ -110,7 +110,7 @@ func (s *getCountServer) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	response, err := s.service.GetCount(*ctx, &request)
+	response, err := s.service.GetCount(ctx, &request)
 	if err != nil {
 		s.errorProcessor.Encode(ctx, &ctx.Response, err)
 		return

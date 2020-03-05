@@ -5,112 +5,139 @@ package httpclient
 
 import (
 	"context"
-	`net/http`
 
 	"github.com/valyala/fasthttp"
 
-	`github.com/LuLStackCoder/test-service/pkg/models`
+	"github.com/LuLStackCoder/test-service/pkg/models"
 )
 
 const (
 	method = "http://"
 
-	URIPathClientGetUser    = "/api/v1/user"
-	URIPathClientPostOrder = "/api/v1/orders"
-	URIPathClientGetCount      = "/api/v1/user/:id/count"
-	URIPathClientGetOrder  = "/api/v1/orders"
+	URIPrefix = "/api/v1"
+
+	URIPathClientGetUser = URIPrefix + "/user"
+	URIPathClientPostOrder = URIPrefix + "/orders"
+	URIPathClientGetUserCount = URIPrefix + "/user/%s/count"
+	URIPathClientGetOrders = URIPrefix + "/orders"
+
+	HTTPMethodGetUser = "GET"
+	HTTPMethodPostOrder = "POST"
+	HTTPMethodGetUserCount = "GET"
+	HTTPMethodGetOrders = "GET"
 )
 
-type (
-	beforeRequest func(req *fasthttp.Request) (err error)
-	afterResponse func(resp *fasthttp.Response) (err error)
+var (
+
+	GetUser = option{}
+	PostOrder = option{}
+	GetUserCount = option{}
+	GetOrders = option{}
 )
 
+type option struct{}
+
+// Option ...
+type Option interface {
+	Prepare(ctx context.Context, r *fasthttp.Request)
+}
 
 // Service implements Service interface
 type Service interface {
-	GetUser(ctx context.Context, request *models.Request) (response models.Response, err error)
-	PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error)
-	GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error)
-	GetOrder(ctx context.Context) (response models.Response, err error)
+	GetUser(ctx context.Context, request *models.Request) (res models.Response, err error)
+	PostOrder(ctx context.Context, request *models.Request) (res models.Response, err error)
+	GetCount(ctx context.Context, request *models.Request) (res models.Response, err error)
+	GetOrder(ctx context.Context) (res models.Response, err error)
 }
 
 type client struct {
 	cli *fasthttp.HostClient
 
-
-	transportGetUser   GetUserClientTransport
+	transportGetUser GetUserClientTransport
 	transportPostOrder PostOrderClientTransport
-	transportGetCount  GetCountClientTransport
-	transportGetOrder  GetOrderClientTransport
+	transportGetCount GetCountClientTransport
+	transportGetOrder GetOrderClientTransport
+	options map[interface{}]Option
 }
 
 // GetUser ...
-func (s *client) GetUser(ctx context.Context, request *models.Request) (response models.Response, err error) {
-	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+func (s *client) GetUser(ctx context.Context, request *models.Request) (res models.Response, err error) {
+	req, ress := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
-		fasthttp.ReleaseResponse(res)
+		fasthttp.ReleaseResponse(ress)
 	}()
+	if opt, ok := s.options[GetUser]; ok {
+		opt.Prepare(ctx, req)
+	}
 	if err = s.transportGetUser.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
-	err = s.cli.Do(req, res)
+	err = s.cli.Do(req, ress)
 	if err != nil {
 		return
 	}
-	return s.transportGetUser.DecodeResponse(ctx, res)
+	return s.transportGetUser.DecodeResponse(ctx, ress)
 }
 
 // PostOrder ...
-func (s *client) PostOrder(ctx context.Context, request *models.Request) (response models.Response, err error) {
-	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
-	defer func() {;
+func (s *client) PostOrder(ctx context.Context, request *models.Request) (res models.Response, err error) {
+	req, ress := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+	defer func() {
 		fasthttp.ReleaseRequest(req)
-		fasthttp.ReleaseResponse(res)
+		fasthttp.ReleaseResponse(ress)
 	}()
+	if opt, ok := s.options[PostOrder]; ok {
+		opt.Prepare(ctx, req)
+	}
 	if err = s.transportPostOrder.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
-	err = s.cli.Do(req, res)
+	err = s.cli.Do(req, ress)
 	if err != nil {
 		return
 	}
-	return s.transportPostOrder.DecodeResponse(ctx, res)
+	return s.transportPostOrder.DecodeResponse(ctx, ress)
 }
 
-// GetCount ...
-func (s *client) GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error) {
-	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+// GetUserCount ...
+func (s *client) GetCount(ctx context.Context, request *models.Request) (res models.Response, err error) {
+	req, ress := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
-		fasthttp.ReleaseResponse(res)
+		fasthttp.ReleaseResponse(ress)
 	}()
+	if opt, ok := s.options[GetUserCount]; ok {
+		opt.Prepare(ctx, req)
+	}
 	if err = s.transportGetCount.EncodeRequest(ctx, req, request); err != nil {
 		return
 	}
-	err = s.cli.Do(req, res)
+	err = s.cli.Do(req, ress)
 	if err != nil {
 		return
 	}
-	return s.transportGetCount.DecodeResponse(ctx, res)
+	return s.transportGetCount.DecodeResponse(ctx, ress)
 }
 
-// GetOrder ...
-func (s *client) GetOrder(ctx context.Context) (response models.Response, err error) {
-	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+// GetOrders ...
+func (s *client) GetOrder(ctx context.Context) (res models.Response, err error) {
+	req, ress := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 	defer func() {
 		fasthttp.ReleaseRequest(req)
-		fasthttp.ReleaseResponse(res)
+		fasthttp.ReleaseResponse(ress)
 	}()
-	if err = s.transportGetOrder.EncodeRequest(ctx, req,); err != nil {
+	if opt, ok := s.options[GetOrders]; ok {
+		opt.Prepare(ctx, req)
+	}
+	if err = s.transportGetOrder.EncodeRequest(ctx, req); err != nil {
 		return
 	}
-	err = s.cli.Do(req, res)
+	err = s.cli.Do(req, ress)
 	if err != nil {
 		return
 	}
-	return s.transportGetOrder.DecodeResponse(ctx, res)
+	return s.transportGetOrder.DecodeResponse(ctx, ress)
 }
 
 // NewClient the client creator
@@ -121,62 +148,77 @@ func NewClient(
 	transportPostOrder PostOrderClientTransport,
 	transportGetCount GetCountClientTransport,
 	transportGetOrder GetOrderClientTransport,
+	options map[interface{}]Option,
 ) Service {
 	return &client{
 		cli: cli,
 
-		transportGetUser:   transportGetUser,
+		transportGetUser: transportGetUser,
 		transportPostOrder: transportPostOrder,
-		transportGetCount:  transportGetCount,
-		transportGetOrder:  transportGetOrder,
+		transportGetCount: transportGetCount,
+		transportGetOrder: transportGetOrder,
+		options: options,
 	}
 }
 
 // NewPreparedClient create and set up http client
 func NewPreparedClient(
 	serverURL string,
+	serverHost string,
 	maxConns int,
+	options map[interface{}]Option,
 	errorProcessor errorProcessor,
 	errorCreator errorCreator,
-) Service {
 
+	uriPathGetUser string,
+	uriPathPostOrder string,
+	uriPathGetUserCount string,
+	uriPathGetOrders string,
+
+	httpMethodGetUser string,
+	httpMethodPostOrder string,
+	httpMethodGetUserCount string,
+	httpMethodGetOrders string,
+) Service {
+	serverURL = method + serverURL
 	transportGetUser := NewGetUserClientTransport(
 		errorProcessor,
 		errorCreator,
-		method+serverURL+URIPathClientGetUser,
-		http.MethodGet,
+		serverURL+uriPathGetUser,
+		httpMethodGetUser,
 	)
 
 	transportPostOrder := NewPostOrderClientTransport(
 		errorProcessor,
 		errorCreator,
-		method+serverURL+URIPathClientGetUser,
-		http.MethodPost,
+		serverURL+uriPathPostOrder,
+		httpMethodPostOrder,
 	)
 
-	transportGetCount := NewGetCountClientTransport(
+	transportGetUserCount := NewGetCountClientTransport(
 		errorProcessor,
 		errorCreator,
-		method+serverURL+URIPathClientGetUser,
-		http.MethodGet,
+		serverURL+uriPathGetUserCount,
+		httpMethodGetUserCount,
 	)
 
-	transportGetOrder := NewGetOrderClientTransport(
+	transportGetOrders := NewGetOrderClientTransport(
 		errorProcessor,
 		errorCreator,
-		method+serverURL+URIPathClientGetUser,
-		http.MethodGet,
+		serverURL+uriPathGetOrders,
+		httpMethodGetOrders,
 	)
 
 	return NewClient(
 		&fasthttp.HostClient{
-			Addr:     serverURL,
+			Addr:     serverHost,
 			MaxConns: maxConns,
 		},
 
 		transportGetUser,
 		transportPostOrder,
-		transportGetCount,
-		transportGetOrder,
+		transportGetUserCount,
+		transportGetOrders,
+		options,
 	)
 }

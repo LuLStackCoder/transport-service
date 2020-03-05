@@ -4,7 +4,6 @@ import (
 	`context`
 	`log`
 	`net/http`
-	`reflect`
 	`testing`
 	`time`
 
@@ -17,9 +16,9 @@ import (
 )
 
 const (
-	serverAddr         = "localhost:8080"
-	maxConns           = 512
-	maxRequestBodySize = 15 * 1024 * 1024
+	serverAddr               = "localhost:8080"
+	maxConns                 = 512
+	maxRequestBodySize       = 15 * 1024 * 1024
 	serverTimeout            = 1 * time.Millisecond
 	serverLaunchingWaitSleep = 1 * time.Second
 
@@ -28,155 +27,29 @@ const (
 	methodGetCount  = "GetCount"
 	methodGetOrder  = "GetOrder"
 
-	getUserSuccess    = "Get user success test"
+	testId        = 12
+	testError     = false
+	testErrorText = ""
+
+	getUserSuccess      = "Get user success test"
+	postOrderSuccess    = "TestPostOrderSuccess"
+	getUserCountSuccess = "TestGetUserCountSuccess"
+	gettOrdersSuccess   = "TestGetOrdersSuccess"
 )
 
 var (
 	nilError error
 
-	testId = 12
-	testError = false
-	testErrorText = ""
-	testData = models.DataStruct{Res: true}
+	testData                          = models.DataStruct{Res: true}
 	testCustomError map[string]string = nil
 )
 
-func TestNewClient(t *testing.T) {
-	type args struct {
-		cli                *fasthttp.HostClient
-		transportGetUser   GetUserClientTransport
-		transportPostOrder PostOrderClientTransport
-		transportGetCount  GetCountClientTransport
-		transportGetOrder  GetOrderClientTransport
-	}
-	tests := []struct {
-		name string
-		args args
-		want Service
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewClient(tt.args.cli, tt.args.transportGetUser, tt.args.transportPostOrder, tt.args.transportGetCount, tt.args.transportGetOrder); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewClient() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestNewPreparedClient(t *testing.T) {
-	type args struct {
-		serverURL      string
-		maxConns       int
-		errorProcessor errorProcessor
-		errorCreator   errorCreator
-	}
-	tests := []struct {
-		name string
-		args args
-		want Service
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewPreparedClient(tt.args.serverURL, tt.args.maxConns, tt.args.errorProcessor, tt.args.errorCreator); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewPreparedClient() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_client_GetCount(t *testing.T) {
-	type fields struct {
-		cli                *fasthttp.HostClient
-		transportGetUser   GetUserClientTransport
-		transportPostOrder PostOrderClientTransport
-		transportGetCount  GetCountClientTransport
-		transportGetOrder  GetOrderClientTransport
-	}
-	type args struct {
-		ctx     fasthttp.RequestCtx
-		request *models.Request
-	}
-	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantResponse models.Response
-		wantErr      bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &client{
-				cli:                tt.fields.cli,
-				transportGetUser:   tt.fields.transportGetUser,
-				transportPostOrder: tt.fields.transportPostOrder,
-				transportGetCount:  tt.fields.transportGetCount,
-				transportGetOrder:  tt.fields.transportGetOrder,
-			}
-			gotResponse, err := s.GetCount(tt.args.ctx, tt.args.request)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetCount() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
-				t.Errorf("GetCount() gotResponse = %v, want %v", gotResponse, tt.wantResponse)
-			}
-		})
-	}
-}
-
-func Test_client_GetOrder(t *testing.T) {
-	type fields struct {
-		cli                *fasthttp.HostClient
-		transportGetUser   GetUserClientTransport
-		transportPostOrder PostOrderClientTransport
-		transportGetCount  GetCountClientTransport
-		transportGetOrder  GetOrderClientTransport
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantResponse models.Response
-		wantErr      bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &client{
-				cli:                tt.fields.cli,
-				transportGetUser:   tt.fields.transportGetUser,
-				transportPostOrder: tt.fields.transportPostOrder,
-				transportGetCount:  tt.fields.transportGetCount,
-				transportGetOrder:  tt.fields.transportGetOrder,
-			}
-			gotResponse, err := s.GetOrder(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetOrder() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
-				t.Errorf("GetOrder() gotResponse = %v, want %v", gotResponse, tt.wantResponse)
-			}
-		})
-	}
-}
-
 func Test_client_GetUserSuccess(t *testing.T) {
-	request := makeClientRequest()
-	response := makeClientResponse()
 	t.Run(getUserSuccess, func(t *testing.T) {
+		request := makeClientRequest()
+		response := makeClientResponse()
 		serviceMock := new(service.Mock)
-		serviceMock.On(methodGetUser, context.Background(), *request).Return(response, nil)
+		serviceMock.On(methodGetUser, context.Background(), request).Return(response, nil)
 		server, client := makeServerClient(serverAddr, serviceMock)
 		defer func() {
 			err := server.Shutdown()
@@ -186,29 +59,101 @@ func Test_client_GetUserSuccess(t *testing.T) {
 		}()
 		time.Sleep(serverLaunchingWaitSleep)
 
-		_, err := client.GetUser(context.Background(), request)
-
+		resp, err := client.GetUser(context.Background(), request)
+		assert.Equal(t, resp, response)
 		assert.NoError(t, err, "unexpected error:", err)
 	})
 }
 
 func Test_client_PostOrder(t *testing.T) {
+	t.Run(postOrderSuccess, func(t *testing.T) {
+		request := makeClientRequest()
+		response := makeClientResponse()
+		serviceMock := new(service.Mock)
+		serviceMock.On(methodPostOrder, context.Background(), request).Return(response, nil)
+		server, client := makeServerClient(serverAddr, serviceMock)
+		defer func() {
+			err := server.Shutdown()
+			if err != nil {
+				log.Printf("server shut down err: %v", err)
+			}
+		}()
+		time.Sleep(serverLaunchingWaitSleep)
 
+		resp, err := client.PostOrder(context.Background(), request)
+		assert.Equal(t, resp, response)
+		assert.NoError(t, err, "unexpected error:", err)
+
+	})
+}
+
+func Test_client_GetUserCount(t *testing.T) {
+	t.Run(getUserCountSuccess, func(t *testing.T) {
+		request := makeClientRequest()
+		response := makeClientResponse()
+		serviceMock := new(service.Mock)
+		serviceMock.On(methodGetCount, context.Background(), request).Return(response, nil)
+		server, client := makeServerClient(serverAddr, serviceMock)
+		defer func() {
+			err := server.Shutdown()
+			if err != nil {
+				log.Printf("server shut down err: %v", err)
+			}
+		}()
+		time.Sleep(serverLaunchingWaitSleep)
+
+		resp, err := client.GetCount(context.Background(), request)
+		assert.Equal(t, resp, response)
+		assert.NoError(t, err, "unexpected error:", err)
+
+	})
+}
+
+func Test_client_GetOrders(t *testing.T) {
+	t.Run(gettOrdersSuccess, func(t *testing.T) {
+		response := models.Response{}
+		serviceMock := new(service.Mock)
+		serviceMock.On(methodGetOrder, context.Background()).Return(response, nil)
+		server, client := makeServerClient(serverAddr, serviceMock)
+		defer func() {
+			err := server.Shutdown()
+			if err != nil {
+				log.Printf("server shut down err: %v", err)
+			}
+		}()
+		time.Sleep(serverLaunchingWaitSleep)
+
+		resp, err := client.GetOrder(context.Background())
+		assert.Equal(t, resp, response)
+		assert.NoError(t, err, "unexpected error:", err)
+
+	})
 }
 
 func makeServerClient(serverAddr string, svc Service) (server *fasthttp.Server, client Service) {
 	client = NewPreparedClient(
 		serverAddr,
+		serverAddr,
 		maxConns,
+		nil,
 		httpserver.NewErrorProcessor(http.StatusInternalServerError, "Internal Error"),
 		httpserver.NewError,
+		URIPathClientGetUser,
+		URIPathClientPostOrder,
+		URIPathClientGetUserCount,
+		URIPathClientGetOrders,
+		HTTPMethodGetUser,
+		HTTPMethodPostOrder,
+		HTTPMethodGetUserCount,
+		HTTPMethodGetOrders,
 	)
 	router := httpserver.NewPreparedServer(svc)
-	server = &fasthttp.Server {
-		Handler: router.Handler,
+	server = &fasthttp.Server{
+		Handler:            router.Handler,
 		MaxRequestBodySize: maxRequestBodySize,
-		ReadTimeout: serverTimeout,
+		ReadTimeout:        serverTimeout,
 	}
+
 	go func() {
 		err := server.ListenAndServe(serverAddr)
 		if err != nil {
@@ -224,11 +169,14 @@ func makeClientRequest() *models.Request {
 	}
 }
 
-func makeClientResponse() *models.Response {
-	return &models.Response{
-		Error: testError,
-		ErrorText: testErrorText,
-		Data: &testData,
-		CustomError: testCustomError,
+func makePostOrderRequest() *models.Request {
+	return &models.Request{
+		Id: testId,
+	}
+}
+
+func makeClientResponse() models.Response {
+	return models.Response{
+		Data: &models.DataStruct{Res: true},
 	}
 }

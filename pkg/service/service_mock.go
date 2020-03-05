@@ -4,7 +4,6 @@ import (
 	`context`
 
 	"github.com/stretchr/testify/mock"
-	`github.com/valyala/fasthttp`
 
 	`github.com/LuLStackCoder/test-service/pkg/models`
 )
@@ -29,7 +28,7 @@ func (m *Mock) PostOrder(ctx context.Context, request *models.Request) (response
 	return response, args.Error(0)
 }
 
-func (m *Mock) GetCount(ctx fasthttp.RequestCtx, request *models.Request) (response models.Response, err error) {
+func (m *Mock) GetCount(ctx context.Context, request *models.Request) (response models.Response, err error) {
 	args := m.Called(context.Background(), request)
 	if a, ok := args.Get(0).(models.Response); ok {
 		return a, args.Error(1)

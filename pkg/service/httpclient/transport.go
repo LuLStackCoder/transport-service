@@ -3,11 +3,14 @@
 //THIS FILE COULD BE EDITED BY HANDS
 package httpclient
 
+
 import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/valyala/fasthttp"
 
@@ -21,10 +24,11 @@ type errorProcessor interface {
 	Decode(r *fasthttp.Response) error
 }
 
+
 // GetUserClientTransport transport interface
 type GetUserClientTransport interface {
 	EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error)
-	DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error)
+	DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error)
 }
 
 type getUserClientTransport struct {
@@ -38,27 +42,27 @@ type getUserClientTransport struct {
 func (t *getUserClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error) {
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
-	r.Header.Set("Content-Type", "application/json")
-	r.URI().QueryArgs().Add("id", string(request.Id))
+
+	r.URI().QueryArgs().Set("id", strconv.Itoa(request.Id))
 	return
 }
 
 // DecodeResponse method for decoding response on client side
-func (t *getUserClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error) {
+func (t *getUserClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error) {
 	if r.StatusCode() != http.StatusOK {
 		err = t.errorProcessor.Decode(r)
 		return
 	}
-	err = response.UnmarshalJSON(r.Body())
+	err = res.UnmarshalJSON(r.Body())
 	return
 }
 
 // NewGetUserClientTransport the transport creator for http requests
 func NewGetUserClientTransport(
 	errorProcessor errorProcessor,
-	errorCreator errorCreator,
-	pathTemplate string,
-	method string,
+	errorCreator   errorCreator,
+	pathTemplate   string,
+	method         string,
 ) GetUserClientTransport {
 	return &getUserClientTransport{
 		errorProcessor: errorProcessor,
@@ -67,11 +71,10 @@ func NewGetUserClientTransport(
 		method:         method,
 	}
 }
-
 // PostOrderClientTransport transport interface
 type PostOrderClientTransport interface {
 	EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error)
-	DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error)
+	DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error)
 }
 
 type postOrderClientTransport struct {
@@ -95,21 +98,21 @@ func (t *postOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthtt
 }
 
 // DecodeResponse method for decoding response on client side
-func (t *postOrderClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error) {
+func (t *postOrderClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error) {
 	if r.StatusCode() != http.StatusOK {
 		err = t.errorProcessor.Decode(r)
 		return
 	}
-	err = response.UnmarshalJSON(r.Body())
+	err = res.UnmarshalJSON(r.Body())
 	return
 }
 
 // NewPostOrderClientTransport the transport creator for http requests
 func NewPostOrderClientTransport(
 	errorProcessor errorProcessor,
-	errorCreator errorCreator,
-	pathTemplate string,
-	method string,
+	errorCreator   errorCreator,
+	pathTemplate   string,
+	method         string,
 ) PostOrderClientTransport {
 	return &postOrderClientTransport{
 		errorProcessor: errorProcessor,
@@ -118,11 +121,10 @@ func NewPostOrderClientTransport(
 		method:         method,
 	}
 }
-
-// GetCountClientTransport transport interface
+// GetUserCountClientTransport transport interface
 type GetCountClientTransport interface {
-	EncodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request, request *models.Request) (err error)
-	DecodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response) (response models.Response, err error)
+	EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error)
+	DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error)
 }
 
 type getCountClientTransport struct {
@@ -133,30 +135,29 @@ type getCountClientTransport struct {
 }
 
 // EncodeRequest method for encoding requests on client side
-func (t *getCountClientTransport) EncodeRequest(ctx fasthttp.RequestCtx, r *fasthttp.Request, request *models.Request) (err error) {
+func (t *getCountClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request, request *models.Request) (err error) {
 	r.Header.SetMethod(t.method)
-	r.SetRequestURI(t.pathTemplate)
+	r.SetRequestURI(fmt.Sprintf(t.pathTemplate, strconv.Itoa(request.Id)))
 	r.Header.Set("Content-Type", "application/json")
-	ctx.SetUserValue("id", string(request.Id))
 	return
 }
 
 // DecodeResponse method for decoding response on client side
-func (t *getCountClientTransport) DecodeResponse(ctx fasthttp.RequestCtx, r *fasthttp.Response) (response models.Response, err error) {
+func (t *getCountClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error) {
 	if r.StatusCode() != http.StatusOK {
 		err = t.errorProcessor.Decode(r)
 		return
 	}
-	err = response.UnmarshalJSON(r.Body())
+	err = res.UnmarshalJSON(r.Body())
 	return
 }
 
-// NewGetCountClientTransport the transport creator for http requests
+// NewGetUserCountClientTransport the transport creator for http requests
 func NewGetCountClientTransport(
 	errorProcessor errorProcessor,
-	errorCreator errorCreator,
-	pathTemplate string,
-	method string,
+	errorCreator   errorCreator,
+	pathTemplate   string,
+	method         string,
 ) GetCountClientTransport {
 	return &getCountClientTransport{
 		errorProcessor: errorProcessor,
@@ -165,11 +166,10 @@ func NewGetCountClientTransport(
 		method:         method,
 	}
 }
-
-// GetOrderClientTransport transport interface
+// GetOrdersClientTransport transport interface
 type GetOrderClientTransport interface {
-	EncodeRequest(ctx context.Context, r *fasthttp.Request) (err error)
-	DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error)
+	EncodeRequest(ctx context.Context, r *fasthttp.Request,  ) (err error)
+	DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error)
 }
 
 type getOrderClientTransport struct {
@@ -180,7 +180,7 @@ type getOrderClientTransport struct {
 }
 
 // EncodeRequest method for encoding requests on client side
-func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request) (err error) {
+func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp.Request,  ) (err error) {
 	r.Header.SetMethod(t.method)
 	r.SetRequestURI(t.pathTemplate)
 	r.Header.Set("Content-Type", "application/json")
@@ -188,21 +188,21 @@ func (t *getOrderClientTransport) EncodeRequest(ctx context.Context, r *fasthttp
 }
 
 // DecodeResponse method for decoding response on client side
-func (t *getOrderClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (response models.Response, err error) {
+func (t *getOrderClientTransport) DecodeResponse(ctx context.Context, r *fasthttp.Response) (res models.Response, err error) {
 	if r.StatusCode() != http.StatusOK {
 		err = t.errorProcessor.Decode(r)
 		return
 	}
-	err = response.UnmarshalJSON(r.Body())
+	err = res.UnmarshalJSON(r.Body())
 	return
 }
 
-// NewGetOrderClientTransport the transport creator for http requests
+// NewGetOrdersClientTransport the transport creator for http requests
 func NewGetOrderClientTransport(
 	errorProcessor errorProcessor,
-	errorCreator errorCreator,
-	pathTemplate string,
-	method string,
+	errorCreator   errorCreator,
+	pathTemplate   string,
+	method         string,
 ) GetOrderClientTransport {
 	return &getOrderClientTransport{
 		errorProcessor: errorProcessor,
